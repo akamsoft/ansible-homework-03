@@ -1,0 +1,4 @@
+---
+lighthouse_version: "master"
+lighthouse_archive_url: "https://github.com/VKCOM/lighthouse/archive/refs/heads/{{ lighthouse_version }}.tar.gz"
+lighthouse_dest: "/usr/share/nginx/lighthouse"

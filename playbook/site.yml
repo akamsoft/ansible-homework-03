@@ -1,0 +1,185 @@
+---
+- name: Install Clickhouse
+  hosts: clickhouse
+  tags: clickhouse
+  handlers:
+    - name: Start clickhouse service
+      become: true
+      ansible.builtin.service:
+        name: clickhouse-server
+        state: restarted
+  tasks:
+    - name: Get clickhouse distrib (client and server)
+      ansible.builtin.get_url:
+        url: "https://packages.clickhouse.com/rpm/stable/{{ item }}-{{ clickhouse_version }}.x86_64.rpm"
+        dest: "./{{ item }}-{{ clickhouse_version }}.x86_64.rpm"
+        mode: '0644'
+      with_items:
+        - clickhouse-client
+        - clickhouse-server
+      tags: install
+
+    - name: Get clickhouse-common-static distrib
+      ansible.builtin.get_url:
+        url: "https://packages.clickhouse.com/rpm/stable/clickhouse-common-static-{{ clickhouse_version }}.x86_64.rpm"
+        dest: "./clickhouse-common-static-{{ clickhouse_version }}.x86_64.rpm"
+        mode: '0644'
+      tags: install
+
+    - name: Install clickhouse packages
+      become: true
+      ansible.builtin.dnf:
+        name:
+          - clickhouse-common-static-{{ clickhouse_version }}.x86_64.rpm
+          - clickhouse-client-{{ clickhouse_version }}.x86_64.rpm
+          - clickhouse-server-{{ clickhouse_version }}.x86_64.rpm
+        disable_gpg_check: true
+      notify: Start clickhouse service
+      tags: install
+
+    - name: Flush handlers
+      ansible.builtin.meta: flush_handlers
+      tags: install
+
+    - name: Create database
+      ansible.builtin.command: "clickhouse-client -q 'create database logs;'"
+      register: create_db
+      failed_when: create_db.rc != 0 and create_db.rc != 82
+      changed_when: create_db.rc == 0
+      tags: configure
+
+- name: Install and configure Vector
+  hosts: vector
+  become: true
+  tags: vector
+  handlers:
+    - name: Restart vector service
+      ansible.builtin.systemd:
+        name: vector
+        state: restarted
+        daemon_reload: true
+  tasks:
+    - name: Ensure install directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop:
+        - "{{ vector_install_dir }}"
+        - /etc/vector
+        - /var/lib/vector
+      tags: install
+
+    - name: Download Vector archive
+      ansible.builtin.get_url:
+        url: "{{ vector_download_url }}"
+        dest: "/tmp/{{ vector_archive }}"
+        mode: '0644'
+      tags: install
+
+    - name: Unarchive Vector
+      ansible.builtin.unarchive:
+        src: "/tmp/{{ vector_archive }}"
+        dest: "{{ vector_install_dir }}"
+        remote_src: true
+        creates: "{{ vector_bin }}"
+        owner: root
+        group: root
+      tags: install
+
+    - name: Symlink vector binary to /usr/local/bin
+      ansible.builtin.file:
+        src: "{{ vector_bin }}"
+        dest: /usr/local/bin/vector
+        state: link
+        force: true
+        follow: false
+      tags: install
+
+    - name: Deploy Vector configuration
+      ansible.builtin.template:
+        src: vector.yml.j2
+        dest: /etc/vector/vector.yaml
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart vector service
+      tags: configure
+
+    - name: Deploy Vector systemd unit
+      ansible.builtin.template:
+        src: vector.service.j2
+        dest: /etc/systemd/system/vector.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart vector service
+      tags: configure
+
+    - name: Ensure Vector is started and enabled
+      ansible.builtin.systemd:
+        name: vector
+        state: started
+        enabled: true
+        daemon_reload: true
+      tags: configure
+
+- name: Install and configure LightHouse
+  hosts: lighthouse
+  become: true
+  tags: lighthouse
+  handlers:
+    - name: Restart nginx
+      ansible.builtin.systemd:
+        name: nginx
+        state: restarted
+  tasks:
+    - name: Install Nginx
+      ansible.builtin.dnf:
+        name: nginx
+        state: present
+      tags: install
+
+    - name: Create lighthouse directory
+      ansible.builtin.file:
+        path: "{{ lighthouse_dest }}"
+        state: directory
+        owner: nginx
+        group: nginx
+        mode: '0755'
+      tags: install
+
+    - name: Download LightHouse archive
+      ansible.builtin.get_url:
+        url: "{{ lighthouse_archive_url }}"
+        dest: "/tmp/lighthouse.tar.gz"
+        mode: '0644'
+      tags: install
+
+    - name: Extract LightHouse archive
+      ansible.builtin.unarchive:
+        src: "/tmp/lighthouse.tar.gz"
+        dest: "{{ lighthouse_dest }}"
+        remote_src: true
+        extra_opts:
+          - --strip-components=1
+      tags: install
+
+    - name: Deploy Nginx configuration for LightHouse
+      ansible.builtin.template:
+        src: nginx-lighthouse.conf.j2
+        dest: /etc/nginx/conf.d/lighthouse.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart nginx
+      tags: configure
+
+    - name: Ensure Nginx is started and enabled
+      ansible.builtin.systemd:
+        name: nginx
+        state: started
+        enabled: true
+      tags: configure

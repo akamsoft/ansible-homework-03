@@ -1,0 +1,18 @@
+server {
+    listen 80;
+    server_name {{ ansible_default_ipv4.address }};
+
+    root {{ lighthouse_dest }};
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Проксирование запросов к ClickHouse для LightHouse
+    location /clickhouse/ {
+        proxy_pass http://{{ hostvars['clickhouse-01']['ansible_host'] }}:8123/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
