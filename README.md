@@ -18,10 +18,12 @@ Playbook автоматизирует установку и настройку �
 - **Control node:** Debian 13, Ansible установлен через `sudo apt install ansible` (`ansible-core` 2.19+).
 - **Managed hosts** — три VM в Yandex Cloud на Rocky Linux 9:
 
+![Alt text](images/VM.jpg)
+
 | Хост | Группа | Роль | Публичный IP |
 |---|---|---|---|
-| `clickhouse-01` | `clickhouse` | ClickHouse-сервер | `<IP_CLICKHOUSE>` |
-| `vector-01` | `vector` | Vector-агент | `<IP_VECTOR>` |
+| `clickhouse-01` | `clickhouse` | ClickHouse-сервер | `51.250.94.235` |
+| `vector-01` | `vector` | Vector-агент | `51.250.3.88` |
 | `lighthouse-01` | `lighthouse` | LightHouse (Nginx) | `51.250.72.39` |
 
 - Доступ по SSH с ключом `~/.ssh/id_ed25519`, пользователь `alex`.
@@ -32,7 +34,7 @@ Playbook автоматизирует установку и настройку �
 ansible-homework-03/
 ├── README.md
 ├── images/                              # скриншоты выполнения заданий №5–8
-│   ├── 5-lint.png
+│   ├── 1.jpg
 │   ├── 6-check.png
 │   ├── 7-diff.png
 │   └── 8-idempotent.png
@@ -62,13 +64,13 @@ all:
     clickhouse:
       hosts:
         clickhouse-01:
-          ansible_host: <IP_CLICKHOUSE>
+          ansible_host: 51.250.94.235
           ansible_user: alex
           ansible_ssh_private_key_file: ~/.ssh/id_ed25519
     vector:
       hosts:
         vector-01:
-          ansible_host: <IP_VECTOR>
+          ansible_host: 51.250.3.88
           ansible_user: alex
           ansible_ssh_private_key_file: ~/.ssh/id_ed25519
     lighthouse:
@@ -78,6 +80,10 @@ all:
           ansible_user: alex
           ansible_ssh_private_key_file: ~/.ssh/id_ed25519
 ```
+
+![Alt text](images/1.jpg)
+
+![Alt text](images/3.jpg)
 
 ## ⚙️ Параметры (переменные)
 
@@ -106,6 +112,8 @@ all:
 | `lighthouse_version` | Ветка/тег репозитория VKCOM/lighthouse | `"master"` |
 | `lighthouse_archive_url` | URL архива | `https://github.com/VKCOM/lighthouse/archive/refs/heads/{{ lighthouse_version }}.tar.gz` |
 | `lighthouse_dest` | Каталог статики | `/usr/share/nginx/lighthouse` |
+
+![Alt text](images/4.jpg)
 
 ## 🏷️ Теги
 
@@ -284,6 +292,8 @@ Playbook идемпотентен: повторный запуск с `--diff` �
 - **`vector validate`** в версии 0.61.0 не принимает `--config` — используйте позиционный аргумент: `vector validate /etc/vector/vector.yaml`.
 
 ## 🔗 Проверка LightHouse
+
+![Alt text](images/lh.jpg)
 
 1. Открыть в браузере: `http://51.250.72.39/` — интерфейс LightHouse.
 2. В настройках LightHouse указать ClickHouse URL: `http://51.250.72.39/clickhouse/`.
