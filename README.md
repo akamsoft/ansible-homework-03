@@ -245,7 +245,7 @@ connect() to <IP_CLICKHOUSE>:8123 failed (13: Permission denied) while connectin
 
 ### Пункт 5. `ansible-lint site.yml` — 0 ошибок
 
-![ansible-lint]![Alt text](images/6.jpg)
+![Alt text](images/6.jpg)
 
 ### Пункт 6. `--check` — план без изменений
 
