@@ -303,4 +303,3 @@ curl -s "http://51.250.72.39/clickhouse/?query=SELECT%20version()"
 ```
 
 - **Репозиторий:** https://github.com/akamsoft/ansible-homework-03
-- **Этот README:** https://github.com/akamsoft/ansible-homework-03/blob/main/README.md
