@@ -37,6 +37,20 @@
       notify: Start clickhouse service
       tags: install
 
+    - name: Configure ClickHouse listen_host
+      become: true
+      ansible.builtin.copy:
+        dest: /etc/clickhouse-server/config.d/listen.xml
+        content: |
+          <clickhouse>
+            <listen_host>{{ clickhouse_listen_host }}</listen_host>
+          </clickhouse>
+        owner: clickhouse
+        group: clickhouse
+        mode: '0644'
+      notify: Start clickhouse service
+      tags: configure
+
     - name: Flush handlers
       ansible.builtin.meta: flush_handlers
       tags: install
@@ -165,7 +179,22 @@
         remote_src: true
         extra_opts:
           - --strip-components=1
+        owner: nginx
+        group: nginx
       tags: install
+
+    - name: Move default nginx server to port 8080 to avoid conflict
+      ansible.builtin.lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - regexp: '^\s+listen\s+80;'
+          line: '        listen 8080;'
+        - regexp: '^\s+listen\s+\[::\]:80;'
+          line: '        listen [::]:8080;'
+      notify: Restart nginx
+      tags: configure
 
     - name: Deploy Nginx configuration for LightHouse
       ansible.builtin.template:
@@ -175,6 +204,13 @@
         group: root
         mode: '0644'
       notify: Restart nginx
+      tags: configure
+
+    - name: Allow nginx to make outbound connections (SELinux)
+      ansible.posix.seboolean:
+        name: httpd_can_network_connect
+        state: true
+        persistent: true
       tags: configure
 
     - name: Ensure Nginx is started and enabled
