@@ -182,10 +182,10 @@ ansible-playbook -i inventory/prod.yml site.yml
 
 ```bash
 # ClickHouse
-ssh alex@<IP_CLICKHOUSE> "sudo ss -tlnp | grep 8123; clickhouse-client -q 'SHOW DATABASES'"
+ssh alex@51.250.94.235 "sudo ss -tlnp | grep 8123; clickhouse-client -q 'SHOW DATABASES'"
 
 # Vector
-ssh alex@<IP_VECTOR> "sudo systemctl status vector --no-pager | head -5; vector validate /etc/vector/vector.yaml"
+ssh alex@51.250.3.88 "sudo systemctl status vector --no-pager | head -5; vector validate /etc/vector/vector.yaml"
 
 # LightHouse
 ssh alex@51.250.72.39 "sudo systemctl status nginx --no-pager | head -5"
@@ -236,7 +236,7 @@ curl -s "http://51.250.72.39/clickhouse/?query=SELECT%20version()"
 На Rocky Linux 9 по умолчанию `httpd_can_network_connect = off`, и nginx-воркеру запрещено открывать исходящие TCP-соединения. При попытке проксирования к ClickHouse в `/var/log/nginx/error.log` появляется:
 
 ```
-connect() to <IP_CLICKHOUSE>:8123 failed (13: Permission denied) while connecting to upstream
+connect() to 51.250.94.235:8123 failed (13: Permission denied) while connecting to upstream
 ```
 
 Включение `httpd_can_network_connect` решает проблему. В playbook это закреплено задачей `ansible.posix.seboolean` — воспроизводится при пересоздании VM.
