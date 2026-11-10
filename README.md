@@ -1,8 +1,5 @@
 # Домашнее задание к занятию 3 «Использование Ansible»
 
-**Репозиторий:** https://github.com/akamsoft/ansible-homework-03
-**Тег:** [08-ansible-03-yandex](https://github.com/akamsoft/ansible-homework-03/releases/tag/08-ansible-03-yandex)
-
 ## 📖 О чём этот playbook
 
 Playbook автоматизирует установку и настройку трёх сервисов на серверах под управлением **Rocky Linux 9** в Yandex Cloud:
@@ -305,8 +302,5 @@ curl -s "http://51.250.72.39/clickhouse/?query=SELECT%20version()"
 # → 24.8.5.115
 ```
 
-## 📤 Ссылка на решение
-
 - **Репозиторий:** https://github.com/akamsoft/ansible-homework-03
-- **Тег:** https://github.com/akamsoft/ansible-homework-03/releases/tag/08-ansible-03-yandex
 - **Этот README:** https://github.com/akamsoft/ansible-homework-03/blob/main/README.md
